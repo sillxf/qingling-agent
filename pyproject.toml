@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qingling-agent"
+version = "0.1.0"
+description = "Evidence-driven security investigation with workflows, approvals and auditable runs"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["security", "workflow", "agent", "fastapi", "rag"]
+dependencies = [
+  "fastapi>=0.100,<1",
+  "uvicorn>=0.23,<1",
+  "pydantic>=2,<3"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7,<10",
+  "httpx>=0.24,<1",
+  "httpx2>=2.13,<3",
+  "ruff>=0.11,<1",
+  "build>=1,<2"
+]
+
+[project.scripts]
+qingling = "app.__main__:main"
+qingling-demo = "app.demo:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools.packages.find]
+include = ["app", "app.*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+app = ["static/*.html", "resources/config/*.json", "resources/skills/*/SKILL.md", "resources/examples/*.json"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+# Baseline correctness gates, not a claim that legacy code is fully style-clean.
+select = ["E9", "F63", "F7", "F82"]

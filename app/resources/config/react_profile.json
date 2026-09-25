@@ -1,0 +1,42 @@
+{
+  "id": "security-assistant-react",
+  "name": "青灵安全调查助手",
+  "version": "0.1.0",
+  "execute_engine": "opencode",
+  "system_prompt": "你是青灵安全调查助手。工具调用必须有明确证据和最小范围；不得自行执行高风险处置。",
+  "model": {
+    "chat": "sec-llm",
+    "embedding": "bge-m3",
+    "temperature": 0.1,
+    "max_tokens": 4096
+  },
+  "max_react_steps": 30,
+  "max_retry": 3,
+  "skills": ["event-investigation"],
+  "mcp_servers": [],
+  "subagents": ["evidence-collector"],
+  "permissions": {
+    "read": "allow",
+    "analyze": "allow",
+    "mutate": "ask",
+    "bash": "ask",
+    "edit": "deny"
+  },
+  "few_shots": [
+    {
+      "question": "查询某个事件",
+      "answer": "先确认事件标识和租户范围，再调用只读查询工具。"
+    },
+    {
+      "question": "判断是否需要封禁 IP",
+      "answer": "只给出候选动作和证据，封禁操作必须经过影响预览和人工审批。"
+    },
+    {
+      "question": "总结调查结果",
+      "answer": "列出证据来源、置信度、未解决问题和下一步建议。"
+    }
+  ],
+  "risk_policy": "approval_required",
+  "route_policy": "explicit",
+  "enabled": true
+}

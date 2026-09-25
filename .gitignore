@@ -1,0 +1,48 @@
+# Python and build output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+.venv-*/
+dist/
+build/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Local configuration and credentials (examples stay publishable)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+config/local/
+
+# Runtime state and generated reports -- including SQLite outside data/
+data/
+logs/
+artifacts/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Keep historical/internal documents and office exports local.
+docs/*.md
+!docs/README.md
+!docs/Workflow工作台使用说明.md
+*.docx
+*.pdf
+
+# Local model-to-model coordination (not part of the release)
+HANDOFF.md
+
+# Editor/OS local state
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

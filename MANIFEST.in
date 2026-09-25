@@ -1,0 +1,10 @@
+include LICENSE
+# Source distribution support files referenced by README and release workflow.
+include .env.example
+include CONTRIBUTING.md SECURITY.md
+include config/README.md config/mcp_servers.example.json
+include requirements/constraints.txt
+recursive-exclude docs *.md *.docx *.pdf
+include docs/README.md docs/Workflow工作台使用说明.md
+recursive-include docs/images *.png
+include scripts/start-workbench.ps1 scripts/ci_wheel_smoke.py

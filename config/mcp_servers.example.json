@@ -1,0 +1,21 @@
+[
+  {
+    "id": "security-enrichment",
+    "transport": "http",
+    "url": "https://mcp.example.test/jsonrpc",
+    "timeout_seconds": 20,
+    "tools": [
+      {
+        "name": "lookup_indicator",
+        "description": "查询指标的外部情报（只读）",
+        "permission": "read",
+        "risk_level": "low",
+        "input_schema": {
+          "type": "object",
+          "required": ["indicator"],
+          "properties": {"indicator": {"type": "string"}}
+        }
+      }
+    ]
+  }
+]

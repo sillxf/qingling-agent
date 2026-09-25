@@ -1,0 +1,203 @@
+{
+  "schema_version": "1.0",
+  "provenance": "synthetic_fixtures_not_real_security_events",
+  "purpose": "Engineering contract checks, NOT a detection accuracy benchmark.",
+  "cases": [
+    {
+      "id": "risk-with-citations",
+      "input": {
+        "ip": "192.0.2.10",
+        "assets": [
+          {
+            "id": "DEMO-ASSET-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示业务服务器",
+            "severity": "critical"
+          }
+        ],
+        "vulnerabilities": [
+          {
+            "id": "DEMO-VULN-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示：未修复的高影响漏洞",
+            "severity": "critical",
+            "status": "open"
+          }
+        ],
+        "events": [
+          {
+            "id": "DEMO-EVENT-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示：待复核的异常登录",
+            "severity": "high",
+            "status": "open"
+          }
+        ]
+      },
+      "expected": {
+        "status": "succeeded",
+        "assessment": "risk_detected",
+        "observed_risk_level": "critical",
+        "evidence_count": 3,
+        "finding_count": 2
+      }
+    },
+    {
+      "id": "missing-evidence-abstains",
+      "input": {
+        "ip": "192.0.2.10"
+      },
+      "expected": {
+        "status": "succeeded",
+        "assessment": "insufficient_evidence",
+        "evidence_count": 0,
+        "finding_count": 0
+      }
+    },
+    {
+      "id": "asset-importance-is-not-attack",
+      "input": {
+        "ip": "192.0.2.10",
+        "assets": [
+          {
+            "id": "DEMO-ASSET-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示业务服务器",
+            "severity": "critical"
+          }
+        ]
+      },
+      "expected": {
+        "status": "succeeded",
+        "assessment": "insufficient_evidence",
+        "evidence_count": 1,
+        "finding_count": 0
+      }
+    },
+    {
+      "id": "closed-findings-not-active",
+      "input": {
+        "ip": "192.0.2.10",
+        "assets": [
+          {
+            "id": "DEMO-ASSET-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示业务服务器",
+            "severity": "critical"
+          }
+        ],
+        "vulnerabilities": [
+          {
+            "id": "DEMO-CLOSED-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示：已修复漏洞",
+            "severity": "critical",
+            "status": "remediated"
+          }
+        ],
+        "events": [
+          {
+            "id": "DEMO-BENIGN-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示：已核实误报",
+            "severity": "high",
+            "status": "false_positive"
+          }
+        ]
+      },
+      "expected": {
+        "status": "succeeded",
+        "assessment": "insufficient_evidence",
+        "evidence_count": 3,
+        "finding_count": 0
+      }
+    },
+    {
+      "id": "other-target-excluded",
+      "input": {
+        "ip": "192.0.2.10",
+        "assets": [
+          {
+            "id": "DEMO-ASSET-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.99",
+            "title": "演示业务服务器",
+            "severity": "critical"
+          }
+        ],
+        "vulnerabilities": [
+          {
+            "id": "DEMO-VULN-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.99",
+            "title": "演示：未修复的高影响漏洞",
+            "severity": "critical",
+            "status": "open"
+          }
+        ],
+        "events": [
+          {
+            "id": "DEMO-EVENT-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.99",
+            "title": "演示：待复核的异常登录",
+            "severity": "high",
+            "status": "open"
+          }
+        ]
+      },
+      "expected": {
+        "status": "succeeded",
+        "assessment": "insufficient_evidence",
+        "evidence_count": 0,
+        "finding_count": 0
+      }
+    },
+    {
+      "id": "cross-tenant-evidence-rejected",
+      "input": {
+        "ip": "192.0.2.10",
+        "assets": [
+          {
+            "id": "DEMO-ASSET-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示业务服务器",
+            "severity": "critical"
+          }
+        ],
+        "vulnerabilities": [
+          {
+            "id": "DEMO-VULN-001",
+            "tenant_id": "other-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示：未修复的高影响漏洞",
+            "severity": "critical",
+            "status": "open"
+          }
+        ],
+        "events": [
+          {
+            "id": "DEMO-EVENT-001",
+            "tenant_id": "demo-tenant",
+            "ip": "192.0.2.10",
+            "title": "演示：待复核的异常登录",
+            "severity": "high",
+            "status": "open"
+          }
+        ]
+      },
+      "expected": {
+        "status": "failed",
+        "error_code": "VALIDATION_ERROR"
+      }
+    }
+  ]
+}

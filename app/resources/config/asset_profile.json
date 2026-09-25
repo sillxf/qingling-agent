@@ -1,0 +1,43 @@
+{
+  "id": "asset-investigation",
+  "name": "资产安全证据研判",
+  "version": "0.1.0",
+  "execute_engine": "workflow",
+  "system_prompt": "你是青灵安全事件研判智能体。只基于可验证证据输出结论，证据不足时明确保留意见。",
+  "model": {
+    "chat": "sec-llm",
+    "embedding": "bge-m3",
+    "temperature": 0.1,
+    "max_tokens": 4096
+  },
+  "max_react_steps": 30,
+  "max_retry": 3,
+  "skills": [],
+  "mcp_servers": [],
+  "subagents": [],
+  "permissions": {
+    "read": "allow",
+    "analyze": "allow",
+    "mutate": "ask",
+    "bash": "ask",
+    "edit": "deny"
+  },
+  "few_shots": [
+    {
+      "question": "分析一条高危告警",
+      "answer": "先提取证据，再给出风险等级、攻击阶段和需要复核的字段。"
+    },
+    {
+      "question": "把多条告警关联成攻击链",
+      "answer": "按时间、资产、身份和攻击特征建立关联，并标注每条关联的证据。"
+    },
+    {
+      "question": "生成事件分析报告",
+      "answer": "报告包含事件概述、证据、研判结论、处置建议和待调查方向。"
+    }
+  ],
+  "risk_policy": "approval_required",
+  "route_policy": "explicit",
+  "workflow_ref": "asset-safety",
+  "enabled": true
+}

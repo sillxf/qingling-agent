@@ -1,0 +1,185 @@
+{
+  "id": "asset-safety",
+  "version": "1.0.0",
+  "description": "并行评估请求提供的资产、漏洞、事件证据；证据不足保留意见。",
+  "entry": "input",
+  "exit": "output",
+  "max_parallel": 3,
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "ip": {
+        "type": "string",
+        "x-semantic-type": "security.ip.v1"
+      },
+      "assets": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "default": []
+      },
+      "vulnerabilities": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "default": []
+      },
+      "events": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "default": []
+      }
+    },
+    "required": [
+      "ip"
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "required": [
+      "assessment",
+      "ip",
+      "report"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "component": "input"
+    },
+    {
+      "id": "fork",
+      "component": "control.fork"
+    },
+    {
+      "id": "asset",
+      "component": "security.asset.lookup",
+      "bindings": {
+        "ip": {
+          "request": "ip"
+        },
+        "records": {
+          "request": "assets"
+        }
+      }
+    },
+    {
+      "id": "vulnerabilities",
+      "component": "security.vulnerability.lookup",
+      "bindings": {
+        "ip": {
+          "request": "ip"
+        },
+        "records": {
+          "request": "vulnerabilities"
+        }
+      }
+    },
+    {
+      "id": "events",
+      "component": "security.event.lookup",
+      "bindings": {
+        "ip": {
+          "request": "ip"
+        },
+        "records": {
+          "request": "events"
+        }
+      }
+    },
+    {
+      "id": "summary",
+      "component": "security.risk.summarize"
+    },
+    {
+      "id": "output",
+      "component": "output"
+    }
+  ],
+  "edges": [
+    {
+      "from": {
+        "node": "input",
+        "port": "output"
+      },
+      "to": {
+        "node": "fork",
+        "port": "input"
+      }
+    },
+    {
+      "from": {
+        "node": "fork",
+        "port": "output"
+      },
+      "to": {
+        "node": "asset",
+        "port": "trigger"
+      }
+    },
+    {
+      "from": {
+        "node": "asset",
+        "port": "output"
+      },
+      "to": {
+        "node": "summary",
+        "port": "asset"
+      }
+    },
+    {
+      "from": {
+        "node": "fork",
+        "port": "output"
+      },
+      "to": {
+        "node": "vulnerabilities",
+        "port": "trigger"
+      }
+    },
+    {
+      "from": {
+        "node": "vulnerabilities",
+        "port": "output"
+      },
+      "to": {
+        "node": "summary",
+        "port": "vulnerabilities"
+      }
+    },
+    {
+      "from": {
+        "node": "fork",
+        "port": "output"
+      },
+      "to": {
+        "node": "events",
+        "port": "trigger"
+      }
+    },
+    {
+      "from": {
+        "node": "events",
+        "port": "output"
+      },
+      "to": {
+        "node": "summary",
+        "port": "events"
+      }
+    },
+    {
+      "from": {
+        "node": "summary",
+        "port": "output"
+      },
+      "to": {
+        "node": "output",
+        "port": "input"
+      }
+    }
+  ]
+}

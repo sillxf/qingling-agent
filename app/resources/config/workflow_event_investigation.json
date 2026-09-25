@@ -1,0 +1,32 @@
+{
+  "id": "event-investigation",
+  "version": "0.1.0",
+  "entry": "input",
+  "exit": "output",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "message": {"type": "string"},
+      "alert": {"type": "string"}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["report"]
+  },
+  "nodes": [
+    {"id": "input", "component": "input"},
+    {"id": "intent", "component": "intent.detect"},
+    {"id": "noise", "component": "alert.noise_reduce"},
+    {"id": "investigation", "component": "event.investigate"},
+    {"id": "report", "component": "report.generate"},
+    {"id": "output", "component": "output"}
+  ],
+  "edges": [
+    {"from": {"node": "input", "port": "output"}, "to": {"node": "intent", "port": "input"}},
+    {"from": {"node": "intent", "port": "output"}, "to": {"node": "noise", "port": "input"}},
+    {"from": {"node": "noise", "port": "output"}, "to": {"node": "investigation", "port": "input"}},
+    {"from": {"node": "investigation", "port": "output"}, "to": {"node": "report", "port": "input"}},
+    {"from": {"node": "report", "port": "output"}, "to": {"node": "output", "port": "input"}}
+  ]
+}
