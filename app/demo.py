@@ -92,7 +92,8 @@ def run_demo() -> dict[str, Any]:
                     events = runtime.store.list_events(run["id"])
                     approval_id = next(event.data["approval_id"] for event in events if event.event_type == "approval.required")
                     response = client.post(f"/v1/approvals/{approval_id}", headers=headers, json={"approved": approved})
-                    _require(response.status_code == 200, "approval decision failed")
+                    _require(response.status_code == 200,
+                             f"approval decision failed: HTTP {response.status_code}: {response.text[:1000]}")
                     final = _wait(client, run["id"], headers)
                     if approved:
                         _require(final["status"] == "succeeded", "approved run did not complete")
