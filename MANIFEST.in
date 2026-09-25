@@ -8,3 +8,4 @@ recursive-exclude docs *.md *.docx *.pdf
 include docs/README.md docs/Workflow工作台使用说明.md
 recursive-include docs/images *.png
 include scripts/start-workbench.ps1 scripts/ci_wheel_smoke.py
+include tests/conftest.py

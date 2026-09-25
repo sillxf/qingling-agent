@@ -26,9 +26,9 @@ python -m venv .venv
 & .\.venv\Scripts\python.exe -m ruff check app tests scripts
 ```
 
-`app.demo` 在进程内调用真实 FastAPI 路由，使用临时内存、合成数据和确定性离线网关，不开放网络监听，也不使用用户数据库。它检查六个证据情景，以及跨租户 Run 读取拒绝、审批后 dry-run、拒绝后不执行。本地复核（Windows / Python 3.13）为 **9/9**，测试 **125 passed**，基础 lint 通过；本地 `artifacts/` 已忽略，输出不是产品指标。Ruff 仅启用 E9/F63/F7/F82 基础正确性规则。
+`app.demo` 在进程内调用真实 FastAPI 路由，使用临时内存、合成数据和确定性离线网关，不开放网络监听，也不使用用户数据库。它检查六个证据情景，以及跨租户 Run 读取拒绝、审批后 dry-run、拒绝后不执行。本地复核（Windows / Python 3.13）为 **9/9**，测试 **150 passed**，基础 lint 通过；本地 `artifacts/` 已忽略，输出不是产品指标。Ruff 仅启用 E9/F63/F7/F82 基础正确性规则。
 
-GitHub Actions 已配置 Linux / Windows 与 Python 3.10 / 3.13 矩阵。首次远程 CI 有一次 Windows / Python 3.13 的 wheel 烟雾测试中审批决策失败，正在核查；不要将本地结果或单次重跑当作全矩阵稳定通过，最新结果以 Actions 为准。
+GitHub Actions 已配置 Linux / Windows 与 Python 3.10 / 3.13 矩阵。首次远程 CI 的 Windows / Python 3.13 wheel 烟雾测试曾出现审批决策失败，随后诊断版矩阵通过。本补丁修复了可确定性复现的 UUID 引用被手机号脱敏、审批请求因此返回 HTTP 404 的缺陷；首次 CI 未记录 HTTP 状态，不能事后断言其原因相同。本补丁的远端结果以新提交的 Actions 为准。
 
 从本次 `artifacts/demo.json` 的 `sample_report` 摘录：
 

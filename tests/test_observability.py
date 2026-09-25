@@ -2,6 +2,7 @@ import json
 import time
 
 from fastapi.testclient import TestClient
+import pytest
 
 from app.config import Settings
 from app.main import create_app
@@ -230,3 +231,37 @@ def test_model_gateway_error_is_persisted_with_stable_run_contract():
         assert '"code": "MODEL_TIMEOUT"' in events
     finally:
         runtime.close()
+
+
+@pytest.mark.parametrize("key", [
+    "run_id", "approval_id", "correlation_id", "decision_id", "plan_id", "compensation_id", "audit_id",
+])
+def test_canonical_uuid_references_survive_recursive_redaction(key):
+    from app.observability import redact_value, sanitize_audit_event
+
+    value = "abcdefabcdef4abc8defa13812345678"
+    record = {key: value, "data": {key: value}}
+    assert redact_value(record) == record
+    # Store sanitization is a second pass; references must survive both passes.
+    assert sanitize_audit_event(redact_value(record)) == record
+
+
+def test_uuid_reference_exception_does_not_disable_secret_or_pii_redaction():
+    from app.observability import REDACTED, redact_text, redact_value
+
+    value = "abcdefabcdef4abc8defa13812345678"
+    assert redact_text(value) != value  # Free-form text retains its existing policy.
+    sensitive = {
+        "token": value, "api_key": value, "password": value,
+        "authorization": "Bearer " + value, "nested": {"refresh_token": value},
+    }
+    redacted = redact_value(sensitive)
+    assert all(redacted[key] == REDACTED for key in ("token", "api_key", "password", "authorization"))
+    assert redacted["nested"]["refresh_token"] == REDACTED
+    for key in ("approval_id", "run_id", "correlation_id"):
+        for text in ("13812345678", "+86 13812345678", "api_key=abc123", "analyst@example.com",
+                     "prefix:" + value, value + ":suffix", value.replace("4abc", "0abc")):
+            assert redact_value({key: text})[key] != text
+    for key in ("id", "customer_id", "tenant_id", "message", "phone", "user_id"):
+        assert redact_value({key: value})[key] != value
+    assert redact_value({"approval_id": {"password": "secret-value"}}) == {"approval_id": {"password": REDACTED}}

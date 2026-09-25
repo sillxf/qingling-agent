@@ -20,6 +20,15 @@ _JWT_PATTERN = re.compile(r"\beyJ[a-zA-Z0-9_-]{8,}\.[a-zA-Z0-9_-]{8,}\.[a-zA-Z0-
 _EMAIL_PATTERN = re.compile(r"\b([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b")
 _PHONE_PATTERN = re.compile(r"(?<!\d)(\+?86[- ]?)?(1\d{2})\d{4}(\d{4})(?!\d)")
 
+# These protocol references use canonical UUID4 hex values. Their numeric
+# substrings are not phone numbers: changing them breaks resource lookup and
+# event/audit joins. Do not exempt arbitrary *_id keys or free-form text.
+_UUID_REFERENCE_KEYS = frozenset({
+    "run_id", "approval_id", "correlation_id", "decision_id", "plan_id",
+    "compensation_id", "audit_id",
+})
+_UUID4_HEX_PATTERN = re.compile(r"[0-9a-f]{12}4[0-9a-f]{3}[89ab][0-9a-f]{15}")
+
 REDACTED = "***REDACTED***"
 
 
@@ -63,6 +72,8 @@ def redact_value(value: Any, *, key: str = "", depth: int = 0) -> Any:
     if isinstance(value, (list, tuple, set)):
         return [redact_value(item, depth=depth + 1) for item in value]
     if isinstance(value, str):
+        if key in _UUID_REFERENCE_KEYS and _UUID4_HEX_PATTERN.fullmatch(value):
+            return value
         return redact_text(value)
     if isinstance(value, (int, float, bool)) or value is None:
         return value

@@ -9,6 +9,7 @@ from app.config import Settings
 from app.main import create_app
 from app.models import RunCreateRequest, WorkflowManifest
 from app.runtime import RuntimeService
+from app.runtime_errors import ApprovalRequired
 from app.store import InMemoryStore, SQLiteStore
 
 
@@ -83,6 +84,43 @@ def test_waiting_status_is_not_visible_before_approval_audit(runtime, monkeypatc
         assert sum(event.event_type == "approval.required" for event in runtime.store.list_events(run.id)) == 1
 
 
+@pytest.mark.parametrize("engine", ["react", "workflow"])
+@pytest.mark.parametrize("approved", [True, False])
+def test_decision_during_original_worker_unwind(runtime, monkeypatch, engine, approved):
+    """A visible pause remains actionable before its original worker returns."""
+    published, release = Event(), Event()
+    original_request = runtime.request_approval
+
+    def hold_after_publication(approval):
+        try:
+            original_request(approval)
+        except ApprovalRequired:
+            published.set()
+            if not release.wait(5):
+                raise AssertionError("test did not release original worker")
+            raise
+
+    monkeypatch.setattr(runtime, "request_approval", hold_after_publication)
+    run = start_approval(runtime, engine)
+    original_future = runtime._futures[run.id]
+    try:
+        assert published.wait(5), "approval pause was not published"
+        with TestClient(create_app(runtime)) as client:
+            visible = client.get(f"/v1/runs/{run.id}").json()
+            assert visible["status"] == "waiting_approval"
+            approval_id = next(event.data["approval_id"] for event in runtime.store.list_events(run.id)
+                               if event.event_type == "approval.required")
+            response = client.post(f"/v1/approvals/{approval_id}", json={"approved": approved})
+            assert response.status_code == 200, response.text
+            assert runtime.store.get_approval(approval_id).status == ("approved" if approved else "rejected")
+    finally:
+        release.set()
+    original_future.result(timeout=5)
+    if approved:
+        runtime._futures[run.id].result(timeout=5)
+    assert runtime.get_run(run.id).status == ("succeeded" if approved else "failed")
+
+
 @pytest.mark.parametrize("final_status,tail", [("waiting_approval", "approval.required"), ("succeeded", "run.completed")])
 def test_sse_does_not_drop_tail_published_after_its_event_read(runtime, monkeypatch, final_status, tail):
     request = RunCreateRequest(tenant_id="tenant-a", agent_id="event-investigation")
@@ -128,3 +166,30 @@ def test_cancellation_before_pause_does_not_publish_actionable_approval(runtime,
     runtime._futures[run.id].result(timeout=5)
     assert runtime.get_run(run.id).status == "cancelled"
     assert not any(event.event_type == "approval.required" for event in runtime.store.list_events(run.id))
+
+
+@pytest.mark.parametrize("engine", ["react", "workflow"])
+@pytest.mark.parametrize("approved", [True, False])
+def test_phone_like_approval_id_remains_actionable(runtime, phone_like_uuids, engine, approved):
+    """Telemetry must not turn a persisted approval ID into a different ID."""
+    run = start_approval(runtime, engine)
+    runtime._futures[run.id].result(timeout=5)
+    assert runtime.get_run(run.id).status == "waiting_approval"
+    required = next(event for event in runtime.store.list_events(run.id)
+                    if event.event_type == "approval.required")
+    approval_id = required.data["approval_id"]
+    with TestClient(create_app(runtime)) as client:
+        response = client.post(f"/v1/approvals/{approval_id}", json={"approved": approved})
+        assert response.status_code == 200, response.text
+        assert response.json()["id"] == approval_id
+        stream = client.get(f"/v1/runs/{run.id}/events").text
+        assert approval_id in stream
+    if approved:
+        runtime._futures[run.id].result(timeout=5)
+    assert runtime.get_run(run.id).status == ("succeeded" if approved else "failed")
+    approval = runtime.store.get_approval(approval_id)
+    assert approval.run_id == run.id
+    assert approval.consumed_at is not None if approved else approval.consumed_at is None
+    audit = next(item for item in runtime.store.list_audit() if item["event_type"] == "approval.required")
+    assert required.run_id == required.data["run_id"] == audit["run_id"] == audit["data"]["run_id"] == run.id
+    assert audit["data"]["approval_id"] == approval_id

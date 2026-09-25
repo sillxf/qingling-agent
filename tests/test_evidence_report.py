@@ -85,3 +85,8 @@ def test_end_to_end_api_acceptance_demo():
     assert result["passed"] == result["total"] == 9
     assert result["not_a_model_accuracy_benchmark"] is True
     assert result["sample_report"]["findings"]
+
+
+def test_acceptance_demo_with_phone_like_generated_ids(phone_like_uuids):
+    result = run_demo()
+    assert result["passed"] == result["total"] == 9
